@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 void main() {
   runApp(MyApp());
@@ -30,6 +31,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Position? _currentPosition;
   String? _errorMessage;
   StreamSubscription<Position>? _positionStream;
+  String? currentAddress;
 
   @override
   void dispose() {
@@ -83,6 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
         _currentPosition = position;
         _errorMessage = null;
       });
+      getAddressFromLatLng(_currentPosition!);
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -107,6 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
               _currentPosition = position;
               _errorMessage = null;
             });
+            getAddressFromLatLng(_currentPosition!);
           });
     } catch (e) {
       setState(() {
@@ -120,6 +124,24 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _errorMessage = "Pelacakan dihentikan.";
     });
+  }
+
+  void getAddressFromLatLng(Position position) async {
+    try {
+      List<Placemark> placemarks = await GeocodingPlatform.instance!.placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      Placemark place = placemarks[0];
+
+      setState(() {
+        currentAddress =
+            "${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}";
+      });
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
