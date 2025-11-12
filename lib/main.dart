@@ -85,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
         _currentPosition = position;
         _errorMessage = null;
       });
-      getAddressFromLatLng(_currentPosition!);
+      getAddressFromLatLng(position);
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -110,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
               _currentPosition = position;
               _errorMessage = null;
             });
-            getAddressFromLatLng(_currentPosition!);
+            getAddressFromLatLng(position);
           });
     } catch (e) {
       setState(() {
@@ -128,19 +128,32 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void getAddressFromLatLng(Position position) async {
     try {
-      List<Placemark> placemarks = await GeocodingPlatform.instance!.placemarkFromCoordinates(
+      List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       );
 
-      Placemark place = placemarks[0];
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        
+        String address = "";
+        if (place.street != null && place.street!.isNotEmpty) address += "${place.street}, ";
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) address += "${place.subLocality}, ";
+        if (place.locality != null && place.locality!.isNotEmpty) address += "${place.locality}, ";
+        if (place.postalCode != null && place.postalCode!.isNotEmpty) address += "${place.postalCode}, ";
+        if (place.country != null && place.country!.isNotEmpty) address += place.country!;
+        
+        // Remove trailing comma and space if exists
+        if (address.endsWith(", ")) {
+          address = address.substring(0, address.length - 2);
+        }
 
-      setState(() {
-        currentAddress =
-            "${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}";
-      });
+        setState(() {
+          currentAddress = address;
+        });
+      }
     } catch (e) {
-      print(e);
+      print("Error getting address from coordinates: $e");
     }
   }
 
@@ -179,6 +192,18 @@ class _MyHomePageState extends State<MyHomePage> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                      SizedBox(height: 16),
+
+                      if (currentAddress != null)
+                        Text(
+                          "Alamat: $currentAddress",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[700],
                           ),
                         ),
                     ],
